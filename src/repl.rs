@@ -527,9 +527,11 @@ where
     #[cfg(not(feature = "shlex"))]
     fn parse_line(&self, line: &str) -> Option<Vec<String>> {
         let r = regex::Regex::new(r#"("[^"\n]+"|[\S]+)"#).unwrap();
-        Some(r.captures_iter(line)
-              .map(|a| a[0].to_string().replace('\"', ""))
-              .collect::<Vec<String>>())
+        Some(
+            r.captures_iter(line)
+                .map(|a| a[0].to_string().replace('\"', ""))
+                .collect::<Vec<String>>(),
+        )
     }
 
     #[cfg(feature = "shlex")]
@@ -567,7 +569,8 @@ where
     pub async fn process_argv_async(&mut self, argv: Vec<String>) -> core::result::Result<(), E> {
         let mut iter = argv.iter();
         if let Some(command) = iter.next() {
-            self.handle_command_async(command, &iter.map(AsRef::as_ref).collect::<Vec<&str>>()).await
+            self.handle_command_async(command, &iter.map(AsRef::as_ref).collect::<Vec<&str>>())
+                .await
         } else {
             Ok(())
         }
@@ -659,6 +662,8 @@ where
                 Signal::Success(line) => {
                     if let Err(err) = self.process_line(line) {
                         (self.error_handler)(err, self)?;
+                    } else {
+                        let _ = line_editor.sync_history();
                     }
                 }
                 Signal::CtrlC => {
